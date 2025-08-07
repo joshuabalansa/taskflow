@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { databaseService, Task, TeamMember } from '../services/database';
+import LoadingScreen from '../components/LoadingScreen';
 
 interface DatabaseContextType {
   isInitialized: boolean;
@@ -211,6 +212,45 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
     getTasksByStatus,
     getTaskStats
   };
+
+  // Show loading screen while initializing
+  if (loading && !isInitialized) {
+    return (
+      <LoadingScreen 
+        message="Connecting to your workspace..." 
+        showProgress={true} 
+      />
+    );
+  }
+
+  // Show error screen if initialization failed
+  if (error && !isInitialized) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 flex items-center justify-center">
+        <div className="text-center space-y-6 p-8 max-w-md">
+          <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-gray-800">Connection Error</h2>
+            <p className="text-gray-600">{error}</p>
+            <p className="text-sm text-gray-500 mt-4">
+              Please make sure your database is set up correctly. 
+              Check the SETUP_INSTRUCTIONS.md file for help.
+            </p>
+          </div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <DatabaseContext.Provider value={value}>

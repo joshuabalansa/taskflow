@@ -1,0 +1,109 @@
+# A string used to distinguish different Supabase projects on the same machine.
+# Not required if you have a single project.
+project_id = "task-management-dashboard"
+
+[api]
+# Port to use for the API URL.
+port = 54321
+# Schemas to expose in your API. Tables, views and stored procedures in this schema will get API endpoints.
+# public and storage are always included.
+schemas = ["public", "storage", "graphql_public"]
+# Extra schemas to add to the search_path of every request. public is always included.
+extra_search_path = ["public", "extensions"]
+# The maximum number of rows returns from a table, view, materialized view, or function.
+max_rows = 1000
+
+[db]
+# Port to use for the local database URL.
+port = 54322
+# Port used by db diff command to initialize the shadow database.
+shadow_port = 54320
+# The database major version to use. This has to be the same as your remote database's. Run `SHOW server_version;` on the remote database to check.
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+port = 54324
+# Secure the realtime endpoint with a JWT
+secure_channels = true
+
+[studio]
+enabled = true
+port = 54323
+# External URL of the API server that frontend connects to.
+api_url = "http://localhost:54321"
+
+# Email testing server. Emails sent with the local dev setup are not actually sent - rather, they
+# are monitored, and you can view the emails that would have been sent from the web interface.
+[inbucket]
+enabled = true
+port = 54324
+# Uncomment to expose additional ports for testing user applications that send emails.
+# smtp_port = 54325
+# pop3_port = 54326
+
+[storage]
+enabled = true
+port = 54325
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+port = 54326
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000"]
+jwt_expiry = 3600
+enable_signup = true
+enable_email_confirmations = false
+enable_sms_confirmations = false
+enable_phone_confirmations = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+# Use pre-defined map of claims
+[auth.jwt]
+aud = "authenticated"
+exp = 1677649373
+iat = 1677645773
+iss = "supabase-demo"
+ref = "biuwwjhjkdvdnxrhqaaa"
+role = "authenticated"
+sub = "1234567890"
+email = "user@example.com"
+phone = ""
+app_metadata = {}
+user_metadata = {}
+
+[edge_functions]
+enabled = false
+port = 54327
+
+[analytics]
+enabled = false
+port = 54328
+vector_port = 54329
+# Configure one of the supported backends: `postgres`, `clickhouse`.
+backend = "postgres"
+
+# Experimental features may be deprecated any time
+[experimental]
+# Configures Postgres storage-engine with OrioleDB (S3)
+orioledb_version = ""
+# Configures S3 bucket URL, eg. <bucket_name>.s3-<region>.amazonaws.com
+s3_host = "env(S3_HOST)"
+# Configures S3 bucket region, eg. us-east-1
+s3_region = "env(S3_REGION)"
+# Configures AWS_ACCESS_KEY_ID for S3 bucket
+s3_access_key = "env(S3_ACCESS_KEY)"
+# Configures AWS_SECRET_ACCESS_KEY for S3 bucket  
+s3_secret_key = "env(S3_SECRET_KEY)"

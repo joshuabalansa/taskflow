@@ -27,22 +27,22 @@ const TeamActivity: React.FC = () => {
   ]
 
   return (
-    <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl p-6 shadow-lg">
-      <div className="flex items-center gap-2 mb-4">
-        <Activity className="w-5 h-5 text-gray-700" />
-        <h3 className="text-lg font-bold text-gray-800">Team Activity</h3>
+    <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl p-4 sm:p-6 shadow-lg">
+      <div className="flex items-center gap-2 mb-3 sm:mb-4">
+        <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" />
+        <h3 className="text-base sm:text-lg font-bold text-gray-800">Team Activity</h3>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {activities.map((activity, index) => (
-          <div key={index} className="flex items-center gap-3">
+          <div key={index} className="flex items-center gap-2 sm:gap-3">
             <img 
               src={activity.avatar} 
               alt={activity.user}
-              className="w-8 h-8 rounded-full object-cover"
+              className="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0"
             />
-            <div className="flex-1">
-              <p className="text-sm text-gray-700">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm text-gray-700">
                 <span className="font-medium">{activity.user}</span>
                 {' '}{activity.action}{' '}
                 <span className="font-medium">{activity.target}</span>

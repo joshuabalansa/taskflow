@@ -13,7 +13,13 @@ const TeamManagement: React.FC = () => {
     role: '',
     email: '',
     phone: '',
-    status: 'Active'
+    location: '',
+    avatar: '',
+    joinDate: new Date().toISOString().split('T')[0],
+    tasksCompleted: 0,
+    currentTasks: 0,
+    skills: [],
+    status: 'online'
   });
   const handleCreateMember = () => {
     setEditingMember(null);
@@ -22,7 +28,13 @@ const TeamManagement: React.FC = () => {
       role: '',
       email: '',
       phone: '',
-      status: 'Active'
+      location: '',
+      avatar: '',
+      joinDate: new Date().toISOString().split('T')[0],
+      tasksCompleted: 0,
+      currentTasks: 0,
+      skills: [],
+      status: 'online'
     });
     setShowMemberModal(true);
   };
@@ -34,6 +46,12 @@ const TeamManagement: React.FC = () => {
       role: member.role,
       email: member.email,
       phone: member.phone || '',
+      location: member.location || '',
+      avatar: member.avatar || '',
+      joinDate: member.joinDate,
+      tasksCompleted: member.tasksCompleted,
+      currentTasks: member.currentTasks,
+      skills: member.skills || [],
       status: member.status
     });
     setShowMemberModal(true);
@@ -75,10 +93,19 @@ const TeamManagement: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Active': return 'bg-green-100 text-green-800'
-      case 'Away': return 'bg-yellow-100 text-yellow-800'
-      case 'Inactive': return 'bg-red-100 text-red-800'
+      case 'online': return 'bg-green-100 text-green-800'
+      case 'away': return 'bg-yellow-100 text-yellow-800'
+      case 'offline': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'online': return 'Online'
+      case 'away': return 'Away'
+      case 'offline': return 'Offline'
+      default: return status
     }
   };
 
@@ -175,7 +202,7 @@ const TeamManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(member.status)}`}>
-                      {member.status}
+                      {getStatusLabel(member.status)}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -214,92 +241,92 @@ const TeamManagement: React.FC = () => {
 
       {/* Member Modal */}
       {showMemberModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-800">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800">
                 {editingMember ? 'Edit Team Member' : 'Add New Team Member'}
               </h3>
               <button
                 onClick={() => setShowMemberModal(false)}
-                className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
             
-            <form onSubmit={handleSubmitMember} className="space-y-4">
+            <form onSubmit={handleSubmitMember} className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Name *</label>
                 <input
                   type="text"
                   required
                   value={memberForm.name}
                   onChange={(e) => setMemberForm({ ...memberForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="Enter full name"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Role *</label>
                 <input
                   type="text"
                   required
                   value={memberForm.role}
                   onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="e.g., Frontend Developer"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Email *</label>
                 <input
                   type="email"
                   required
                   value={memberForm.email}
                   onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="email@company.com"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Phone</label>
                 <input
                   type="tel"
                   value={memberForm.phone}
                   onChange={(e) => setMemberForm({ ...memberForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="+1 (555) 123-4567"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select
                   value={memberForm.status}
                   onChange={(e) => setMemberForm({ ...memberForm, status: e.target.value as TeamMember['status'] })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                 >
-                  <option value="Active">Active</option>
-                  <option value="Away">Away</option>
-                  <option value="Inactive">Inactive</option>
+                  <option value="online">Online</option>
+                  <option value="away">Away</option>
+                  <option value="offline">Offline</option>
                 </select>
               </div>
               
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
                 <button
                   type="button"
                   onClick={() => setShowMemberModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200"
+                  className="flex-1 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 text-sm sm:text-base"
                 >
                   {editingMember ? 'Update Member' : 'Add Member'}
                 </button>

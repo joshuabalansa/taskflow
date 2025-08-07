@@ -1,4 +1,4 @@
-import initSqlJs, { Database } from 'sql.js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 export interface Task {
   id?: number;
@@ -49,464 +49,268 @@ export interface Note {
 }
 
 class DatabaseService {
-  private db: Database | null = null;
+  private supabase: SupabaseClient;
   private isInitialized = false;
+
+  constructor() {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase environment variables. Please check your .env file.');
+    }
+    
+    this.supabase = createClient(supabaseUrl, supabaseKey);
+  }
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
-
+    
     try {
-      const SQL = await initSqlJs({
-        locateFile: (file) => `https://sql.js.org/dist/${file}`
-      });
-      
-      // Try to load existing database from localStorage
-      const savedDb = this.loadDatabase();
-      if (savedDb) {
-        this.db = new SQL.Database(savedDb);
-      } else {
-        this.db = new SQL.Database();
-        await this.createTables();
-        await this.seedInitialData();
+      // Test the connection
+      const { error } = await this.supabase.from('tasks').select('count', { count: 'exact', head: true });
+      if (error && !error.message.includes('relation "tasks" does not exist')) {
+        throw error;
       }
-      
       this.isInitialized = true;
     } catch (error) {
-      console.error('Failed to initialize database:', error);
+      console.error('Failed to initialize Supabase connection:', error);
       throw error;
     }
   }
 
-  private async createTables(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    // Create tasks table
-    this.db.run(`
-      CREATE TABLE IF NOT EXISTS tasks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        cardLink TEXT,
-        status TEXT NOT NULL CHECK (status IN ('To Do', 'In Progress', 'Review', 'Completed')),
-        priority TEXT NOT NULL CHECK (priority IN ('Low', 'Medium', 'High')),
-        assignee TEXT NOT NULL,
-        avatar TEXT,
-        dueDate TEXT NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        pullRequest TEXT,
-        videoLink TEXT
-      )
-    `);
-
-    // Create team_members table
-    this.db.run(`
-      CREATE TABLE IF NOT EXISTS team_members (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        role TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        phone TEXT,
-        location TEXT,
-        avatar TEXT,
-        joinDate TEXT NOT NULL,
-        tasksCompleted INTEGER DEFAULT 0,
-        currentTasks INTEGER DEFAULT 0,
-        skills TEXT, -- JSON string
-        status TEXT NOT NULL CHECK (status IN ('online', 'away', 'offline'))
-      )
-    `);
-
-    // Create deployments table
-    this.db.run(`
-      CREATE TABLE IF NOT EXISTS deployments (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        taskId INTEGER NOT NULL,
-        environment TEXT NOT NULL CHECK (environment IN ('development', 'staging', 'production')),
-        deployedAt DATETIME,
-        approvedAt DATETIME,
-        status TEXT NOT NULL CHECK (status IN ('pending', 'success', 'failed')),
-        FOREIGN KEY (taskId) REFERENCES tasks (id) ON DELETE CASCADE
-      )
-    `);
-
-    // Create notes table
-    this.db.run(`
-      CREATE TABLE IF NOT EXISTS notes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        taskId INTEGER NOT NULL,
-        type TEXT NOT NULL CHECK (type IN ('dev', 'testing', 'project_owner')),
-        content TEXT NOT NULL,
-        author TEXT NOT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (taskId) REFERENCES tasks (id) ON DELETE CASCADE
-      )
-    `);
-  }
-
-  private async seedInitialData(): Promise<void> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    // Check if data already exists
-    const existingMembers = this.db.exec('SELECT COUNT(*) as count FROM team_members');
-    const memberCount = existingMembers[0]?.values[0]?.[0] as number || 0;
-    
-    const existingTasks = this.db.exec('SELECT COUNT(*) as count FROM tasks');
-    const taskCount = existingTasks[0]?.values[0]?.[0] as number || 0;
-
-    // Only seed if tables are empty
-    if (memberCount === 0) {
-      // Seed team members
-      const teamMembers = [
-        {
-          name: 'Sarah Chen',
-          role: 'Senior Frontend Developer',
-          email: 'sarah.chen@company.com',
-          phone: '+1 (555) 123-4567',
-          status: 'Active'
-        },
-        {
-          name: 'Mike Johnson',
-          role: 'Backend Developer',
-          email: 'mike.johnson@company.com',
-          phone: '+1 (555) 234-5678',
-          status: 'Active'
-        },
-        {
-          name: 'Emily Davis',
-          role: 'UI/UX Designer',
-          email: 'emily.davis@company.com',
-          phone: '+1 (555) 345-6789',
-          status: 'Active'
-        },
-        {
-          name: 'David Wilson',
-          role: 'DevOps Engineer',
-          email: 'david.wilson@company.com',
-          phone: '+1 (555) 456-7890',
-          status: 'Away'
-        }
-      ];
-
-      for (const member of teamMembers) {
-        this.db.run(
-          `INSERT OR IGNORE INTO team_members (name, role, email, phone, status) 
-           VALUES (?, ?, ?, ?, ?)`,
-          [member.name, member.role, member.email, member.phone, member.status]
-        );
-      }
-    }
-
-    if (taskCount === 0) {
-      // Seed tasks
-      const tasks = [
-        {
-          title: 'Create Project via project lists',
-          cardLink: 'https://trello.com/c/MSpWDVZB/1642-create-project-via-project-lists',
-          status: 'In Progress',
-          priority: 'High',
-          assignee: 'Sarah Chen',
-          dueDate: '2024-01-15',
-          pullRequest: 'https://github.com/company/project/pull/123',
-          videoLink: 'https://loom.com/share/demo-video'
-        },
-        {
-          title: 'User Authentication System',
-          cardLink: 'https://trello.com/c/ABC123/1643-user-authentication-system',
-          status: 'Review',
-          priority: 'Medium',
-          assignee: 'Mike Johnson',
-          dueDate: '2024-01-18',
-          pullRequest: 'https://github.com/company/project/pull/124'
-        },
-        {
-          title: 'Dashboard Analytics Widget',
-          status: 'Completed',
-          priority: 'Low',
-          assignee: 'Emily Davis',
-          dueDate: '2024-01-20'
-        },
-        {
-          title: 'Design new landing page',
-          status: 'To Do',
-          priority: 'High',
-          assignee: 'Sarah Chen',
-          dueDate: '2024-01-20'
-        },
-        {
-          title: 'Setup CI/CD pipeline',
-          status: 'To Do',
-          priority: 'Medium',
-          assignee: 'Mike Johnson',
-          dueDate: '2024-01-22'
-        },
-        {
-          title: 'API Documentation',
-          status: 'Review',
-          priority: 'Low',
-          assignee: 'Emily Davis',
-          dueDate: '2024-01-16'
-        }
-      ];
-
-      for (const task of tasks) {
-        this.db.run(
-          `INSERT INTO tasks (title, cardLink, status, priority, assignee, dueDate, pullRequest, videoLink) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [task.title, task.cardLink || null, task.status, task.priority, task.assignee, task.dueDate, task.pullRequest || null, task.videoLink || null]
-        );
-      }
-    }
-
-    this.saveDatabase();
-  }
-
-  private saveDatabase(): void {
-    if (!this.db) return;
-    const data = this.db.export();
-    localStorage.setItem('taskManagementDB', JSON.stringify(Array.from(data)));
-  }
-
-  private loadDatabase(): Uint8Array | null {
-    const data = localStorage.getItem('taskManagementDB');
-    if (!data) return null;
-    try {
-      const parsed = JSON.parse(data);
-      return new Uint8Array(parsed);
-    } catch {
-      return null;
-    }
-  }
-
-  public clearDatabase(): void {
-    localStorage.removeItem('taskManagementDB');
-    this.db = null;
-    this.isInitialized = false;
-  }
-
   // Task CRUD operations
   async createTask(task: Omit<Task, 'id'>): Promise<Task> {
-    if (!this.db) throw new Error('Database not initialized');
+    const taskData = {
+      title: task.title,
+      card_link: task.cardLink || null,
+      status: task.status,
+      priority: task.priority,
+      assignee: task.assignee,
+      avatar: task.avatar || null,
+      due_date: task.dueDate,
+      pull_request: task.pullRequest || null,
+      video_link: task.videoLink || null
+    };
 
-    const result = this.db.run(
-      `INSERT INTO tasks (title, cardLink, status, priority, assignee, avatar, dueDate, pullRequest, videoLink) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [task.title, task.cardLink || null, task.status, task.priority, task.assignee, task.avatar || null, task.dueDate, task.pullRequest || null, task.videoLink || null]
-    );
+    const { data, error } = await this.supabase
+      .from('tasks')
+      .insert([taskData])
+      .select()
+      .single();
 
-    this.saveDatabase();
-    return { ...task, id: result.lastInsertRowid as number };
+    if (error) throw error;
+    
+    return this.mapTaskFromDb(data);
   }
 
   async getTasks(): Promise<Task[]> {
-    if (!this.db) throw new Error('Database not initialized');
+    const { data, error } = await this.supabase
+      .from('tasks')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    const stmt = this.db.prepare('SELECT * FROM tasks ORDER BY createdAt DESC');
-    const tasks: Task[] = [];
+    if (error) throw error;
     
-    while (stmt.step()) {
-      const row = stmt.getAsObject();
-      tasks.push({
-        id: row.id as number,
-        title: row.title as string,
-        cardLink: row.cardLink as string || undefined,
-        status: row.status as Task['status'],
-        priority: row.priority as Task['priority'],
-        assignee: row.assignee as string,
-        avatar: row.avatar as string || undefined,
-        dueDate: row.dueDate as string,
-        createdAt: row.createdAt as string,
-        updatedAt: row.updatedAt as string,
-        pullRequest: row.pullRequest as string || undefined,
-        videoLink: row.videoLink as string || undefined
-      });
-    }
-    
-    stmt.free();
-    return tasks;
+    return data.map(this.mapTaskFromDb);
   }
 
   async getTaskById(id: number): Promise<Task | null> {
-    if (!this.db) throw new Error('Database not initialized');
+    const { data, error } = await this.supabase
+      .from('tasks')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    const stmt = this.db.prepare('SELECT * FROM tasks WHERE id = ?');
-    stmt.bind([id]);
-    
-    if (stmt.step()) {
-      const row = stmt.getAsObject();
-      stmt.free();
-      return {
-        id: row.id as number,
-        title: row.title as string,
-        cardLink: row.cardLink as string || undefined,
-        status: row.status as Task['status'],
-        priority: row.priority as Task['priority'],
-        assignee: row.assignee as string,
-        avatar: row.avatar as string || undefined,
-        dueDate: row.dueDate as string,
-        createdAt: row.createdAt as string,
-        updatedAt: row.updatedAt as string,
-        pullRequest: row.pullRequest as string || undefined,
-        videoLink: row.videoLink as string || undefined
-      };
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      throw error;
     }
     
-    stmt.free();
-    return null;
+    return this.mapTaskFromDb(data);
   }
 
   async updateTask(id: number, updates: Partial<Omit<Task, 'id'>>): Promise<Task | null> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
-    const values = Object.values(updates);
+    const updateData: any = {};
     
-    this.db.run(
-      `UPDATE tasks SET ${setClause}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
-      [...values, id]
-    );
+    if (updates.title !== undefined) updateData.title = updates.title;
+    if (updates.cardLink !== undefined) updateData.card_link = updates.cardLink;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.priority !== undefined) updateData.priority = updates.priority;
+    if (updates.assignee !== undefined) updateData.assignee = updates.assignee;
+    if (updates.avatar !== undefined) updateData.avatar = updates.avatar;
+    if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate;
+    if (updates.pullRequest !== undefined) updateData.pull_request = updates.pullRequest;
+    if (updates.videoLink !== undefined) updateData.video_link = updates.videoLink;
 
-    this.saveDatabase();
-    return this.getTaskById(id);
+    const { data, error } = await this.supabase
+      .from('tasks')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      throw error;
+    }
+    
+    return this.mapTaskFromDb(data);
   }
 
   async deleteTask(id: number): Promise<boolean> {
-    if (!this.db) throw new Error('Database not initialized');
+    const { error } = await this.supabase
+      .from('tasks')
+      .delete()
+      .eq('id', id);
 
-    const result = this.db.run('DELETE FROM tasks WHERE id = ?', [id]);
-    this.saveDatabase();
-    return result.changes > 0;
+    if (error) throw error;
+    return true;
   }
 
   // Team Member CRUD operations
   async createTeamMember(member: Omit<TeamMember, 'id'>): Promise<TeamMember> {
-    if (!this.db) throw new Error('Database not initialized');
+    const memberData = {
+      name: member.name,
+      role: member.role,
+      email: member.email,
+      phone: member.phone || null,
+      location: member.location || null,
+      avatar: member.avatar || null,
+      join_date: member.joinDate,
+      tasks_completed: member.tasksCompleted || 0,
+      current_tasks: member.currentTasks || 0,
+      skills: member.skills || [],
+      status: member.status
+    };
 
-    const result = this.db.run(
-      `INSERT INTO team_members (name, role, email, phone, location, avatar, joinDate, tasksCompleted, currentTasks, skills, status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [member.name, member.role, member.email, member.phone, member.location, member.avatar, member.joinDate, member.tasksCompleted, member.currentTasks, JSON.stringify(member.skills), member.status]
-    );
+    const { data, error } = await this.supabase
+      .from('team_members')
+      .insert([memberData])
+      .select()
+      .single();
 
-    this.saveDatabase();
-    return { ...member, id: result.lastInsertRowid as number };
+    if (error) throw error;
+    
+    return this.mapTeamMemberFromDb(data);
   }
 
   async getTeamMembers(): Promise<TeamMember[]> {
-    if (!this.db) throw new Error('Database not initialized');
+    const { data, error } = await this.supabase
+      .from('team_members')
+      .select('*')
+      .order('name');
 
-    const stmt = this.db.prepare('SELECT * FROM team_members ORDER BY name');
-    const members: TeamMember[] = [];
+    if (error) throw error;
     
-    while (stmt.step()) {
-      const row = stmt.getAsObject();
-      members.push({
-        id: row.id as number,
-        name: row.name as string,
-        role: row.role as string,
-        email: row.email as string,
-        phone: row.phone as string,
-        location: row.location as string,
-        avatar: row.avatar as string,
-        joinDate: row.joinDate as string,
-        tasksCompleted: row.tasksCompleted as number,
-        currentTasks: row.currentTasks as number,
-        skills: JSON.parse(row.skills as string),
-        status: row.status as TeamMember['status']
-      });
-    }
-    
-    stmt.free();
-    return members;
+    return data.map(this.mapTeamMemberFromDb);
   }
 
   async updateTeamMember(id: number, updates: Partial<Omit<TeamMember, 'id'>>): Promise<TeamMember | null> {
-    if (!this.db) throw new Error('Database not initialized');
-
-    const processedUpdates = { ...updates };
-    if (processedUpdates.skills) {
-      processedUpdates.skills = JSON.stringify(processedUpdates.skills) as any;
-    }
-
-    const setClause = Object.keys(processedUpdates).map(key => `${key} = ?`).join(', ');
-    const values = Object.values(processedUpdates);
+    const updateData: any = {};
     
-    this.db.run(
-      `UPDATE team_members SET ${setClause} WHERE id = ?`,
-      [...values, id]
-    );
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.role !== undefined) updateData.role = updates.role;
+    if (updates.email !== undefined) updateData.email = updates.email;
+    if (updates.phone !== undefined) updateData.phone = updates.phone;
+    if (updates.location !== undefined) updateData.location = updates.location;
+    if (updates.avatar !== undefined) updateData.avatar = updates.avatar;
+    if (updates.joinDate !== undefined) updateData.join_date = updates.joinDate;
+    if (updates.tasksCompleted !== undefined) updateData.tasks_completed = updates.tasksCompleted;
+    if (updates.currentTasks !== undefined) updateData.current_tasks = updates.currentTasks;
+    if (updates.skills !== undefined) updateData.skills = updates.skills;
+    if (updates.status !== undefined) updateData.status = updates.status;
 
-    this.saveDatabase();
-    const stmt = this.db.prepare('SELECT * FROM team_members WHERE id = ?');
-    stmt.bind([id]);
-    
-    if (stmt.step()) {
-      const row = stmt.getAsObject();
-      stmt.free();
-      return {
-        id: row.id as number,
-        name: row.name as string,
-        role: row.role as string,
-        email: row.email as string,
-        phone: row.phone as string,
-        location: row.location as string,
-        avatar: row.avatar as string,
-        joinDate: row.joinDate as string,
-        tasksCompleted: row.tasksCompleted as number,
-        currentTasks: row.currentTasks as number,
-        skills: JSON.parse(row.skills as string),
-        status: row.status as TeamMember['status']
-      };
+    const { data, error } = await this.supabase
+      .from('team_members')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      throw error;
     }
     
-    stmt.free();
-    return null;
+    return this.mapTeamMemberFromDb(data);
   }
 
   async deleteTeamMember(id: number): Promise<boolean> {
-    if (!this.db) throw new Error('Database not initialized');
+    const { error } = await this.supabase
+      .from('team_members')
+      .delete()
+      .eq('id', id);
 
-    const result = this.db.run('DELETE FROM team_members WHERE id = ?', [id]);
-    this.saveDatabase();
-    return result.changes > 0;
+    if (error) throw error;
+    return true;
   }
 
-  // Get tasks by status for TaskBoard
+  // Utility methods
   async getTasksByStatus(): Promise<Record<string, Task[]>> {
     const tasks = await this.getTasks();
     return tasks.reduce((acc, task) => {
-      const status = task.status.toLowerCase().replace(' ', '');
-      if (!acc[status]) acc[status] = [];
-      acc[status].push(task);
+      if (!acc[task.status]) acc[task.status] = [];
+      acc[task.status].push(task);
       return acc;
     }, {} as Record<string, Task[]>);
   }
 
-  // Get task statistics for Dashboard
   async getTaskStats(): Promise<{ total: number; inProgress: number; review: number; completed: number }> {
-    if (!this.db) throw new Error('Database not initialized');
+    const { data, error } = await this.supabase
+      .from('tasks')
+      .select('status');
 
-    const stmt = this.db.prepare(`
-      SELECT 
-        COUNT(*) as total,
-        SUM(CASE WHEN status = 'In Progress' THEN 1 ELSE 0 END) as inProgress,
-        SUM(CASE WHEN status = 'Review' THEN 1 ELSE 0 END) as review,
-        SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed
-      FROM tasks
-    `);
-    
-    if (stmt.step()) {
-      const row = stmt.getAsObject();
-      stmt.free();
-      return {
-        total: row.total as number,
-        inProgress: row.inProgress as number,
-        review: row.review as number,
-        completed: row.completed as number
-      };
-    }
-    
-    stmt.free();
-    return { total: 0, inProgress: 0, review: 0, completed: 0 };
+    if (error) throw error;
+
+    const stats = {
+      total: data.length,
+      inProgress: data.filter(t => t.status === 'In Progress').length,
+      review: data.filter(t => t.status === 'Review').length,
+      completed: data.filter(t => t.status === 'Completed').length
+    };
+
+    return stats;
+  }
+
+  // Database mapping helpers
+  private mapTaskFromDb(dbTask: any): Task {
+    return {
+      id: dbTask.id,
+      title: dbTask.title,
+      cardLink: dbTask.card_link,
+      status: dbTask.status,
+      priority: dbTask.priority,
+      assignee: dbTask.assignee,
+      avatar: dbTask.avatar,
+      dueDate: dbTask.due_date,
+      createdAt: dbTask.created_at,
+      updatedAt: dbTask.updated_at,
+      pullRequest: dbTask.pull_request,
+      videoLink: dbTask.video_link
+    };
+  }
+
+  private mapTeamMemberFromDb(dbMember: any): TeamMember {
+    return {
+      id: dbMember.id,
+      name: dbMember.name,
+      role: dbMember.role,
+      email: dbMember.email,
+      phone: dbMember.phone || '',
+      location: dbMember.location || '',
+      avatar: dbMember.avatar || '',
+      joinDate: dbMember.join_date,
+      tasksCompleted: dbMember.tasks_completed || 0,
+      currentTasks: dbMember.current_tasks || 0,
+      skills: dbMember.skills || [],
+      status: dbMember.status
+    };
+  }
+
+  // Legacy methods for compatibility
+  clearDatabase(): void {
+    console.warn('clearDatabase() is not supported with Supabase. Use Supabase dashboard to manage data.');
   }
 }
 

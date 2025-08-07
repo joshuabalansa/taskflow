@@ -10,6 +10,7 @@ import { DatabaseProvider } from './contexts/DatabaseContext'
 
 function App() {
   const [activeView, setActiveView] = useState('dashboard')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const renderActiveView = () => {
     switch (activeView) {
@@ -32,10 +33,18 @@ function App() {
     <DatabaseProvider>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 font-inter">
         <div className="flex">
-          <Sidebar activeView={activeView} setActiveView={setActiveView} />
-          <div className="flex-1 flex flex-col">
-            <Header />
-            <main className="flex-1 p-6">
+          <Sidebar 
+            activeView={activeView} 
+            setActiveView={setActiveView}
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+          />
+          <div className="flex-1 flex flex-col min-w-0">
+            <Header 
+              sidebarOpen={sidebarOpen}
+              setSidebarOpen={setSidebarOpen}
+            />
+            <main className="flex-1 p-3 sm:p-4 lg:p-6">
               {renderActiveView()}
             </main>
           </div>

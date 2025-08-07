@@ -1,6 +1,7 @@
 import React from 'react'
 import { Clock, User, ExternalLink, MoreHorizontal } from 'lucide-react'
 import { useDatabaseContext } from '../contexts/DatabaseContext'
+import LoadingSpinner from './LoadingSpinner'
 
 const RecentTasks: React.FC = () => {
   const { tasks, loading, error } = useDatabaseContext();
@@ -39,10 +40,9 @@ const RecentTasks: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl p-6 shadow-lg">
-        <div className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-          <p className="ml-2 text-gray-600">Loading recent tasks...</p>
+      <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl p-4 sm:p-6 shadow-lg">
+        <div className="h-32">
+          <LoadingSpinner size="md" message="Loading recent tasks..." className="h-full" />
         </div>
       </div>
     );
@@ -50,38 +50,38 @@ const RecentTasks: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl p-6 shadow-lg">
-        <div className="text-center py-8">
-          <p className="text-red-600">Error loading tasks: {error}</p>
+      <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl p-4 sm:p-6 shadow-lg">
+        <div className="text-center py-6 sm:py-8">
+          <p className="text-red-600 text-sm sm:text-base">Error loading tasks: {error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl p-6 shadow-lg">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Recent Tasks</h2>
-        <button className="text-blue-600 hover:text-blue-700 font-medium text-sm">View All</button>
+    <div className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl p-4 sm:p-6 shadow-lg">
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800">Recent Tasks</h2>
+        <button className="text-blue-600 hover:text-blue-700 font-medium text-xs sm:text-sm">View All</button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {recentTasks.map((task) => (
-          <div key={task.id} className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-xl p-4 hover:bg-white/40 transition-all duration-200">
+          <div key={task.id} className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-xl p-3 sm:p-4 hover:bg-white/40 transition-all duration-200">
             <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-2">
                   <a 
                     href={task.cardLink} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-lg font-semibold text-gray-800 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1"
+                    className="text-base sm:text-lg font-semibold text-gray-800 hover:text-blue-600 transition-colors duration-200 flex items-center gap-1 truncate"
                   >
-                    {task.title}
-                    <ExternalLink className="w-4 h-4" />
+                    <span className="truncate">{task.title}</span>
+                    <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                   </a>
                 </div>
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
                   <span className={`px-2 py-1 rounded-lg text-xs font-medium border ${getStatusColor(task.status)}`}>
                     {task.status}
                   </span>
@@ -90,57 +90,55 @@ const RecentTasks: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <button className="p-1 hover:bg-white/20 rounded-lg transition-colors duration-200">
+              <button className="p-1 hover:bg-white/20 rounded-lg transition-colors duration-200 flex-shrink-0">
                 <MoreHorizontal className="w-4 h-4 text-gray-500" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4">
               <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Deployment Status</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Task Details</h4>
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
-                    <span>Dev:</span>
-                    <span className={task.deployments.dev ? 'text-green-600' : 'text-gray-400'}>
-                      {task.deployments.dev || 'Not deployed'}
+                    <span>Priority:</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                      {task.priority}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Staging:</span>
-                    <span className={task.deployments.staging ? 'text-green-600' : 'text-gray-400'}>
-                      {task.deployments.staging || 'Not deployed'}
+                    <span>Status:</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+                      {task.status}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Production:</span>
-                    <span className={task.deployments.production ? 'text-green-600' : 'text-gray-400'}>
-                      {task.deployments.production || 'Not deployed'}
-                    </span>
-                  </div>
+                  {task.dueDate && (
+                    <div className="flex justify-between">
+                      <span>Due:</span>
+                      <span className="text-gray-600">
+                        {new Date(task.dueDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Approvals</h4>
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between">
-                    <span>Dev:</span>
-                    <span className={task.approvals.dev ? 'text-green-600' : 'text-gray-400'}>
-                      {task.approvals.dev || 'Pending'}
-                    </span>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Assignee</h4>
+                <div className="space-y-2 text-xs">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                      {getInitials(task.assignee)}
+                    </div>
+                    <span className="text-gray-700 font-medium">{task.assignee}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Staging:</span>
-                    <span className={task.approvals.staging ? 'text-green-600' : 'text-gray-400'}>
-                      {task.approvals.staging || 'Pending'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Production:</span>
-                    <span className={task.approvals.production ? 'text-green-600' : 'text-gray-400'}>
-                      {task.approvals.production || 'Pending'}
-                    </span>
-                  </div>
+                  {task.createdAt && (
+                    <div className="flex justify-between">
+                      <span>Created:</span>
+                      <span className="text-gray-600">
+                        {new Date(task.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -173,18 +171,18 @@ const RecentTasks: React.FC = () => {
               </div>
             </div>
 
-            {task.notes.length > 0 && (
+            {task.cardLink && (
               <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 mb-3">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Notes</h4>
-                <div className="space-y-2">
-                  {task.notes.map((note, index) => (
-                    <div key={index} className="text-xs">
-                      <span className="font-medium text-gray-600">{note.type}:</span>
-                      <span className="ml-1 text-gray-700">{note.content}</span>
-                      <span className="ml-2 text-gray-500">- {note.author}</span>
-                    </div>
-                  ))}
-                </div>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Card Link</h4>
+                <a 
+                  href={task.cardLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  View Task Card
+                </a>
               </div>
             )}
 

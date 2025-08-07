@@ -23,6 +23,7 @@ const Dashboard: React.FC = () => {
     review: 0,
     completed: 0
   });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     loadStats();
@@ -30,10 +31,13 @@ const Dashboard: React.FC = () => {
 
   const loadStats = async () => {
     try {
+      setStatsLoading(true);
       const taskStats = await getTaskStats();
       setStats(taskStats);
     } catch (err) {
       console.error('Failed to load stats:', err);
+    } finally {
+      setStatsLoading(false);
     }
   };
   const statsCards = [
@@ -72,27 +76,44 @@ const Dashboard: React.FC = () => {
   ]
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome back! Here's what's happening with your projects.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Dashboard</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Welcome back! Here's what's happening with your projects.</p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Calendar className="w-4 h-4" />
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
+          <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
           <span>Last updated: 2 minutes ago</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {loading ? (
-          <div className="col-span-4 text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Loading dashboard...</p>
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {statsLoading ? (
+          // Loading skeleton for stats cards
+          Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 animate-pulse">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 rounded-lg"></div>
+                <div className="w-10 h-3 sm:w-12 sm:h-4 bg-gray-200 rounded"></div>
+              </div>
+              <div className="space-y-2">
+                <div className="w-12 h-6 sm:w-16 sm:h-8 bg-gray-200 rounded"></div>
+                <div className="w-20 h-3 sm:w-24 sm:h-4 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          ))
         ) : error ? (
-          <div className="col-span-4 text-center py-8">
-            <p className="text-red-600">Error loading dashboard: {error}</p>
+          <div className="col-span-full text-center py-6 sm:py-8">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-600 text-sm sm:text-base">Error loading dashboard: {error}</p>
+              <button 
+                onClick={loadStats}
+                className="mt-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         ) : (
           statsCards.map((stat, index) => (
@@ -101,11 +122,11 @@ const Dashboard: React.FC = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
+        <div className="xl:col-span-2">
           <RecentTasks />
         </div>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <DeploymentStatus />
           <TeamActivity />
         </div>

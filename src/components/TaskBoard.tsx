@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Plus, Filter, Search, Edit, Trash2, X } from 'lucide-react'
 import { useDatabaseContext } from '../contexts/DatabaseContext'
 import { Task } from '../services/database'
+import LoadingSpinner from './LoadingSpinner'
 
 const TaskBoard: React.FC = () => {
   const { tasks, loading, error, createTask, updateTask, deleteTask, teamMembers } = useDatabaseContext();
@@ -124,9 +125,8 @@ const TaskBoard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p className="ml-2 text-gray-600">Loading tasks...</p>
+      <div className="h-64">
+        <LoadingSpinner size="lg" message="Loading tasks..." className="h-full" />
       </div>
     );
   }
@@ -140,13 +140,13 @@ const TaskBoard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Task Board</h1>
-          <p className="text-gray-600 mt-1">Manage and track your team's tasks</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Task Board</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage and track your team's tasks</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -154,41 +154,43 @@ const TaskBoard: React.FC = () => {
               placeholder="Search tasks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              className="w-full pl-10 pr-4 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm sm:text-base"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl hover:bg-white/30 transition-all duration-200">
-            <Filter className="w-4 h-4" />
-            Filter
-          </button>
-          <button 
-            onClick={handleCreateTask}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg"
-          >
-            <Plus className="w-4 h-4" />
-            Add Task
-          </button>
+          <div className="flex gap-2 sm:gap-3">
+            <button className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl hover:bg-white/30 transition-all duration-200 flex-1 sm:flex-none">
+              <Filter className="w-4 h-4" />
+              <span className="text-sm sm:text-base">Filter</span>
+            </button>
+            <button 
+              onClick={handleCreateTask}
+              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg flex-1 sm:flex-none"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="text-sm sm:text-base">Add Task</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
         {columns.map((column) => (
-          <div key={column.id} className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl p-4 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
+          <div key={column.id} className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-2xl p-3 sm:p-4 shadow-lg">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
               <div className="flex items-center gap-2">
                 <div className={`w-3 h-3 rounded-full ${column.color.replace('bg-', 'bg-').replace('-100', '-500')}`}></div>
-                <h3 className="font-semibold text-gray-800">{column.title}</h3>
+                <h3 className="font-semibold text-gray-800 text-sm sm:text-base">{column.title}</h3>
               </div>
               <span className="bg-white/30 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-medium text-gray-600">
                 {column.count}
               </span>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {tasksByStatus[column.id as keyof typeof tasksByStatus]?.map((task) => (
-                <div key={task.id} className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-xl p-4 hover:bg-white/40 transition-all duration-200 group">
+                <div key={task.id} className="bg-white/30 backdrop-blur-sm border border-white/40 rounded-xl p-3 sm:p-4 hover:bg-white/40 transition-all duration-200 group">
                   <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-medium text-gray-800 flex-1 pr-2">{task.title}</h4>
+                    <h4 className="font-medium text-gray-800 flex-1 pr-2 text-sm sm:text-base">{task.title}</h4>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleEditTask(task)}
@@ -210,12 +212,12 @@ const TaskBoard: React.FC = () => {
                     </span>
                     <span className="text-xs text-gray-500">{task.dueDate}</span>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                      <div className="w-5 h-5 sm:w-6 sm:h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
                         {getInitials(task.assignee)}
                       </div>
-                      <span className="text-sm text-gray-600">{task.assignee}</span>
+                      <span className="text-xs sm:text-sm text-gray-600 truncate">{task.assignee}</span>
                     </div>
                     <select
                       value={task.status}
@@ -245,40 +247,40 @@ const TaskBoard: React.FC = () => {
 
       {/* Task Modal */}
       {showTaskModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-800">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800">
                 {editingTask ? 'Edit Task' : 'Create New Task'}
               </h3>
               <button
                 onClick={() => setShowTaskModal(false)}
-                className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
             
-            <form onSubmit={handleSubmitTask} className="space-y-4">
+            <form onSubmit={handleSubmitTask} className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Title *</label>
                 <input
                   type="text"
                   required
                   value={taskForm.title}
                   onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="Enter task title"
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Status</label>
                   <select
                     value={taskForm.status}
                     onChange={(e) => setTaskForm({ ...taskForm, status: e.target.value as Task['status'] })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   >
                     <option value="To Do">To Do</option>
                     <option value="In Progress">In Progress</option>
@@ -288,11 +290,11 @@ const TaskBoard: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Priority</label>
                   <select
                     value={taskForm.priority}
                     onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as Task['priority'] })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   >
                     <option value="Low">Low</option>
                     <option value="Medium">Medium</option>
@@ -302,12 +304,12 @@ const TaskBoard: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assignee *</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Assignee *</label>
                 <select
                   required
                   value={taskForm.assignee}
                   onChange={(e) => setTaskForm({ ...taskForm, assignee: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                 >
                   <option value="">Select assignee</option>
                   {teamMembers.map((member) => (
@@ -319,60 +321,60 @@ const TaskBoard: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date *</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Due Date *</label>
                 <input
                   type="date"
                   required
                   value={taskForm.dueDate}
                   onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Card Link</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Card Link</label>
                 <input
                   type="url"
                   value={taskForm.cardLink}
                   onChange={(e) => setTaskForm({ ...taskForm, cardLink: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="https://trello.com/c/..."
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pull Request</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Pull Request</label>
                 <input
                   type="url"
                   value={taskForm.pullRequest}
                   onChange={(e) => setTaskForm({ ...taskForm, pullRequest: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="https://github.com/..."
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Video Link</label>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Video Link</label>
                 <input
                   type="url"
                   value={taskForm.videoLink}
                   onChange={(e) => setTaskForm({ ...taskForm, videoLink: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   placeholder="https://loom.com/share/..."
                 />
               </div>
               
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
                 <button
                   type="button"
                   onClick={() => setShowTaskModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-3 sm:px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200"
+                  className="flex-1 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 text-sm sm:text-base"
                 >
                   {editingTask ? 'Update Task' : 'Create Task'}
                 </button>
