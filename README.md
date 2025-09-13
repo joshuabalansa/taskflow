@@ -1,3 +1,7 @@
+
+<img width="1902" height="879" alt="Screenshot 2025-09-13 at 11 02 28 PM" src="https://github.com/user-attachments/assets/b7d80cd2-e2f9-4d48-9769-477f8e6014c8" />
+
+
 # Task Management Dashboard with Deployment Tracking
 
 A modern, feature-rich task management dashboard built with React, TypeScript, and Tailwind CSS. This application provides comprehensive project management capabilities with integrated deployment tracking, team management, and analytics.
@@ -173,7 +177,8 @@ For support, please open an issue in the GitHub repository or contact the develo
 - Mobile application
 - Multi-tenant support
 - Advanced deployment pipeline integration
-
+  
 ---
+
 
 **Built with ❤️ using React, TypeScript, and modern web technologies**
