@@ -1,5 +1,6 @@
 
 <img width="1902" height="879" alt="Screenshot 2025-09-13 at 11 02 28 PM" src="https://github.com/user-attachments/assets/b7d80cd2-e2f9-4d48-9769-477f8e6014c8" />
+<img width="1909" height="884" alt="image" src="https://github.com/user-attachments/assets/451210e6-3dde-4f83-9df5-b01381d1891d" />
 
 
 # Task Management Dashboard with Deployment Tracking
